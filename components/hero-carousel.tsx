@@ -22,7 +22,7 @@ export function HeroCarousel() {
   }, [next])
 
   return (
-    <section className="relative h-[360px] w-full overflow-hidden sm:h-[440px] lg:h-[520px]">
+    <section className="relative h-[calc(100dvh-70px)] w-full overflow-hidden md:h-[calc(100dvh-80px)]">
       {heroSlides.map((slide, i) => (
         <div
           key={slide.title}
