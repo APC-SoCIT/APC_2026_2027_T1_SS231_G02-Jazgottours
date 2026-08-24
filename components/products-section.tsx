@@ -1,38 +1,50 @@
 "use client"
 
 import React, { useState } from "react"
-import { useRouter } from "next/navigation"
 import { ProductCard } from "@/components/product-card"
 import { tours } from "@/lib/tours"
 
 export function ProductsSection() {
-  const router = useRouter()
-  
-  // Dev State: We will connect this to Supabase Auth later. 
-  // Change this to 'true' to simulate a logged-in user!
+  // --- STATE MANAGEMENT ---
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  // Modal and Form State
+  
+  // Modals
   const [selectedTour, setSelectedTour] = useState<any>(null)
-  const [clientName, setClientName] = useState("")
-  const [clientEmail, setClientEmail] = useState("")
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
+  const [pendingTour, setPendingTour] = useState<any>(null) // Remembers which tour they clicked before logging in
 
-  // The B2C Logic Routing
+  // Form Inputs
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [clientName, setClientName] = useState("")
+
+  // --- LOGIC HANDLERS ---
   const handleTourClick = (tour: any) => {
     if (!isLoggedIn) {
-      alert("You need to create an account or sign in first to book a tour!")
-      router.push("/signin") // Routes them to your sign-in page
+      setPendingTour(tour)
+      setShowAuthModal(true)
     } else {
-      setSelectedTour(tour) // Opens the booking modal if they have an account
+      setSelectedTour(tour)
+    }
+  }
+
+  const handleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // Simulated Supabase Login/Register
+    setIsLoggedIn(true)
+    setShowAuthModal(false)
+    if (pendingTour) {
+      setSelectedTour(pendingTour) // Instantly open booking modal after login!
+      setPendingTour(null)
     }
   }
 
   const handleBookNow = (e: React.FormEvent) => {
     e.preventDefault()
-    alert(`Success! Booking for ${clientName} on ${selectedTour?.name} has been processed.`)
+    alert(`Success! ${clientName || email}'s booking for ${selectedTour?.name} is confirmed!`)
     setSelectedTour(null)
     setClientName("")
-    setClientEmail("")
   }
 
   return (
@@ -44,12 +56,12 @@ export function ProductsSection() {
           unforgettable memories
         </p>
         
-        {/* DEV TOGGLE: Just so you can easily show your panel both scenarios */}
+        {/* DEV TOGGLE FOR TESTING */}
         <button 
           onClick={() => setIsLoggedIn(!isLoggedIn)} 
           className="mt-6 px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-full transition-colors"
         >
-          [Dev Tool] Simulate User Status: {isLoggedIn ? "LOGGED IN" : "LOGGED OUT"}
+          Dev Status: {isLoggedIn ? "LOGGED IN" : "LOGGED OUT"}
         </button>
       </div>
 
@@ -65,46 +77,76 @@ export function ProductsSection() {
         ))}
       </div>
 
-      {/* Pop-up Booking Modal (Only renders if logged in AND a tour is clicked) */}
+      {/* 1. AUTHENTICATION MODAL (Matches your screenshot style) */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl text-center">
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">
+              {authMode === "signin" ? "Welcome back" : "Create an Account"}
+            </h3>
+            <p className="text-slate-500 mb-6 text-sm">
+              {authMode === "signin" 
+                ? "Sign in to manage your bookings and tours." 
+                : "Sign up to start booking your unforgettable memories."}
+            </p>
+            
+            <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
+              {authMode === "signup" && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                  <input type="text" required value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-amber-500 text-slate-900" />
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <input type="email" placeholder="you@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-amber-500 text-slate-900" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                <input type="password" placeholder="••••••••" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-amber-500 text-slate-900" />
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowAuthModal(false)} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg font-medium hover:bg-slate-200">
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg font-medium transition-colors">
+                  {authMode === "signin" ? "Sign In" : "Sign Up"}
+                </button>
+              </div>
+            </form>
+
+            {/* FIXED: The "Don't have an account" toggle */}
+            <p className="mt-6 text-sm text-slate-500">
+              {authMode === "signin" ? "Don't have an account? " : "Already have an account? "}
+              <button 
+                onClick={() => setAuthMode(authMode === "signin" ? "signup" : "signin")}
+                className="text-amber-600 font-semibold hover:underline"
+              >
+                {authMode === "signin" ? "Create an account" : "Sign in"}
+              </button>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 2. BOOKING MODAL (Only shows if logged in AND tour selected) */}
       {isLoggedIn && selectedTour && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl">
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">Book</h3>
-            <p className="text-slate-500 mb-6">Enter your details to secure your slot.</p>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">Secure your slot</h3>
+            <p className="text-slate-500 mb-6">Booking: <strong>{selectedTour.name}</strong></p>
             
             <form onSubmit={handleBookNow} className="space-y-4 text-left">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
-                <input 
-                  type="text" 
-                  required
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 text-slate-900" 
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email Address</label>
-                <input 
-                  type="email" 
-                  required
-                  value={clientEmail}
-                  onChange={(e) => setClientEmail(e.target.value)}
-                  className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 text-slate-900" 
-                />
+                <label className="block text-sm font-medium text-slate-700 mb-1">Booking Name</label>
+                <input type="text" required value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 text-slate-900" />
               </div>
               <div className="flex gap-4 mt-6">
-                <button 
-                  type="button"
-                  onClick={() => setSelectedTour(null)}
-                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg font-medium transition-colors"
-                >
+                <button type="button" onClick={() => setSelectedTour(null)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg font-medium">
                   Cancel
                 </button>
-                <button 
-                  type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium transition-colors"
-                >
+                <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium">
                   Confirm Booking
                 </button>
               </div>
