@@ -1,20 +1,36 @@
 "use client"
 
 import React, { useState } from "react"
+import { useRouter } from "next/navigation"
 import { ProductCard } from "@/components/product-card"
 import { tours } from "@/lib/tours"
 
 export function ProductsSection() {
+  const router = useRouter()
+  
+  // Dev State: We will connect this to Supabase Auth later. 
+  // Change this to 'true' to simulate a logged-in user!
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
   // Modal and Form State
   const [selectedTour, setSelectedTour] = useState<any>(null)
   const [clientName, setClientName] = useState("")
   const [clientEmail, setClientEmail] = useState("")
 
+  // The B2C Logic Routing
+  const handleTourClick = (tour: any) => {
+    if (!isLoggedIn) {
+      alert("You need to create an account or sign in first to book a tour!")
+      router.push("/signin") // Routes them to your sign-in page
+    } else {
+      setSelectedTour(tour) // Opens the booking modal if they have an account
+    }
+  }
+
   const handleBookNow = (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulated backend submission
-    alert(`Success! Booking for ${clientName} on ${selectedTour?.name || 'this tour'} has been sent directly to the Admin Sales Dashboard.`)
-    setSelectedTour(null) // Close modal
+    alert(`Success! Booking for ${clientName} on ${selectedTour?.name} has been processed.`)
+    setSelectedTour(null)
     setClientName("")
     setClientEmail("")
   }
@@ -27,23 +43,33 @@ export function ProductsSection() {
           Discover our handpicked selection of exclusive tour packages designed to create
           unforgettable memories
         </p>
+        
+        {/* DEV TOGGLE: Just so you can easily show your panel both scenarios */}
+        <button 
+          onClick={() => setIsLoggedIn(!isLoggedIn)} 
+          className="mt-6 px-3 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold rounded-full transition-colors"
+        >
+          [Dev Tool] Simulate User Status: {isLoggedIn ? "LOGGED IN" : "LOGGED OUT"}
+        </button>
       </div>
 
       <div className="mx-auto mt-10 grid max-w-5xl gap-6 sm:grid-cols-3">
         {tours.map((tour) => (
-          // We wrap your existing card in a clickable div to trigger the modal
-          // This ensures your ProductCard design stays 100% untouched!
-          <div key={tour.id} onClick={() => setSelectedTour(tour)} className="cursor-pointer transition-transform hover:scale-[1.02]">
+          <div 
+            key={tour.id} 
+            onClick={() => handleTourClick(tour)} 
+            className="cursor-pointer transition-transform hover:scale-[1.02]"
+          >
             <ProductCard tour={tour} />
           </div>
         ))}
       </div>
 
-      {/* Pop-up Booking Modal */}
-      {selectedTour && (
+      {/* Pop-up Booking Modal (Only renders if logged in AND a tour is clicked) */}
+      {isLoggedIn && selectedTour && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl">
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">Book {selectedTour.name}</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">Book</h3>
             <p className="text-slate-500 mb-6">Enter your details to secure your slot.</p>
             
             <form onSubmit={handleBookNow} className="space-y-4 text-left">
