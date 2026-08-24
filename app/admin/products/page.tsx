@@ -51,10 +51,25 @@ export default function ProductsPage() {
                   </span>
                 </td>
                 <td className="p-4 font-semibold text-slate-700">₱{product.basePrice.toLocaleString()}</td>
+                
+                {/* FIXED BUTTON UI HERE */}
                 <td className="p-4">
-                  <button className="text-blue-600 hover:text-blue-800 text-sm font-medium mr-4">Edit</button>
-                  <button className="text-red-600 hover:text-red-800 text-sm font-medium">Archive</button>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => alert(`Opening edit modal for: ${product.name}`)}
+                      className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      onClick={() => alert(`Are you sure you want to archive ${product.name}?`)}
+                      className="text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                    >
+                      Archive
+                    </button>
+                  </div>
                 </td>
+                
               </tr>
             ))}
           </tbody>
