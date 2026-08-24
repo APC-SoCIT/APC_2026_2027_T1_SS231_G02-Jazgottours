@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import { toast } from "sonner"
 import { ProductCard } from "@/components/product-card"
 import { tours } from "@/lib/tours"
 
@@ -8,13 +9,10 @@ export function ProductsSection() {
   // --- STATE MANAGEMENT ---
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   
-  // Modals
-  const [selectedTour, setSelectedTour] = useState<any>(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
-  const [pendingTour, setPendingTour] = useState<any>(null) // Remembers which tour they clicked before logging in
+  const [pendingTour, setPendingTour] = useState<any>(null) 
 
-  // Form Inputs
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [clientName, setClientName] = useState("")
@@ -25,26 +23,23 @@ export function ProductsSection() {
       setPendingTour(tour)
       setShowAuthModal(true)
     } else {
-      setSelectedTour(tour)
+      // 1-Click Booking if they are already logged in!
+      toast.success(`Success! Your booking for ${tour.name} is confirmed!`)
     }
   }
 
   const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulated Supabase Login/Register
     setIsLoggedIn(true)
     setShowAuthModal(false)
+    
     if (pendingTour) {
-      setSelectedTour(pendingTour) // Instantly open booking modal after login!
+      // Instantly confirms the booking they clicked before logging in
+      toast.success(`Account connected! Your booking for ${pendingTour.name} is confirmed!`)
       setPendingTour(null)
+    } else {
+      toast.success("Signed in successfully!")
     }
-  }
-
-  const handleBookNow = (e: React.FormEvent) => {
-    e.preventDefault()
-    alert(`Success! ${clientName || email}'s booking for ${selectedTour?.name} is confirmed!`)
-    setSelectedTour(null)
-    setClientName("")
   }
 
   return (
@@ -77,7 +72,7 @@ export function ProductsSection() {
         ))}
       </div>
 
-      {/* 1. AUTHENTICATION MODAL (Matches your screenshot style) */}
+      {/* AUTHENTICATION MODAL ONLY */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl text-center">
@@ -86,8 +81,8 @@ export function ProductsSection() {
             </h3>
             <p className="text-slate-500 mb-6 text-sm">
               {authMode === "signin" 
-                ? "Sign in to manage your bookings and tours." 
-                : "Sign up to start booking your unforgettable memories."}
+                ? "Sign in to securely book your tour." 
+                : "Sign up to secure your slot instantly."}
             </p>
             
             <form onSubmit={handleAuthSubmit} className="space-y-4 text-left">
@@ -111,12 +106,11 @@ export function ProductsSection() {
                   Cancel
                 </button>
                 <button type="submit" className="flex-1 bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-lg font-medium transition-colors">
-                  {authMode === "signin" ? "Sign In" : "Sign Up"}
+                  {authMode === "signin" ? "Sign In & Book" : "Sign Up & Book"}
                 </button>
               </div>
             </form>
 
-            {/* FIXED: The "Don't have an account" toggle */}
             <p className="mt-6 text-sm text-slate-500">
               {authMode === "signin" ? "Don't have an account? " : "Already have an account? "}
               <button 
@@ -126,31 +120,6 @@ export function ProductsSection() {
                 {authMode === "signin" ? "Create an account" : "Sign in"}
               </button>
             </p>
-          </div>
-        </div>
-      )}
-
-      {/* 2. BOOKING MODAL (Only shows if logged in AND tour selected) */}
-      {isLoggedIn && selectedTour && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl p-8 max-w-md w-full shadow-2xl">
-            <h3 className="text-2xl font-bold text-slate-900 mb-2">Secure your slot</h3>
-            <p className="text-slate-500 mb-6">Booking: <strong>{selectedTour.name}</strong></p>
-            
-            <form onSubmit={handleBookNow} className="space-y-4 text-left">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Booking Name</label>
-                <input type="text" required value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 text-slate-900" />
-              </div>
-              <div className="flex gap-4 mt-6">
-                <button type="button" onClick={() => setSelectedTour(null)} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2 rounded-lg font-medium">
-                  Cancel
-                </button>
-                <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium">
-                  Confirm Booking
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
