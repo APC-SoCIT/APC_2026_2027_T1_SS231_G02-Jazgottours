@@ -3,12 +3,12 @@
 import React, { useState, useRef } from "react"
 import { SiteShell } from "@/components/site-shell"
 import html2canvas from "html2canvas"
-import jsPDF from "jspdf"
+import { jsPDF } from "jspdf" // <-- THIS IS THE CRUCIAL FIX!
 import { toast } from "sonner"
 
 export default function DashboardPage() {
   // State to handle the expandable invoice details
-  const [isExpanded, setIsExpanded] = useState(true) // Default to true so it matches your screenshot
+  const [isExpanded, setIsExpanded] = useState(true) 
   
   // Ref to target the invoice container for the PDF snapshot
   const invoiceRef = useRef<HTMLDivElement>(null)
@@ -38,6 +38,7 @@ export default function DashboardPage() {
       toast.dismiss()
       toast.success("Invoice downloaded successfully!")
     } catch (error) {
+      console.error("PDF Generation Error:", error)
       toast.dismiss()
       toast.error("Failed to generate PDF.")
     }
