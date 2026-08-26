@@ -13,13 +13,13 @@ export default function CheckoutPage() {
     e.preventDefault()
     setIsProcessing(true)
     
-    // Simulating the delay of a Paymongo API call
     toast.loading("Processing payment securely via Paymongo...")
 
     setTimeout(() => {
       toast.dismiss()
       toast.success("Payment successful! Your booking is confirmed.")
-      router.push("/") // Redirects back to home (or a future user dashboard)
+      // CHANGED: Route to the new dashboard page
+      router.push("/dashboard") 
     }, 2500)
   }
 
