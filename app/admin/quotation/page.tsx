@@ -1,145 +1,195 @@
-"use client"
+'use client';
+import { useState } from 'react';
+import { FiDownload, FiSend, FiCheckCircle, FiTrash2 } from 'react-icons/fi';
 
-import React, { useState, useMemo } from 'react'
-
-// Core Math Engine for the Innovation Feature
-const calculateQuote = ({
-  vanRental, guideFee, accommodation, headcount, perHeadFee, markupPercent, companySplitPercent
-}: any) => {
-  const totalPerHead = Number(headcount) * Number(perHeadFee)
-  const baseCost = Number(vanRental) + Number(guideFee) + Number(accommodation) + totalPerHead
-  
-  const safeMarkupPercent = Math.max(0, Number(markupPercent))
-  const totalMarkup = baseCost * (safeMarkupPercent / 100)
-  const clientTotalPrice = baseCost + totalMarkup
-  
-  const companyProfit = totalMarkup * (Number(companySplitPercent) / 100)
-  const affiliateCommission = totalMarkup - companyProfit
-  
-  const isLossRisk = safeMarkupPercent < 10 // Minimum 10% safety floor
-
-  return { baseCost, totalMarkup, clientTotalPrice, companyProfit, affiliateCommission, isLossRisk }
+interface Item {
+  name: string;
+  price: number;
+  category: string;
 }
 
-export default function QuotationPage() {
-  // Form State
-  const [clientName, setClientName] = useState("")
-  const [vanRental, setVanRental] = useState(6000)
-  const [guideFee, setGuideFee] = useState(2500)
-  const [accommodation, setAccommodation] = useState(4000)
-  const [headcount, setHeadcount] = useState(4)
-  const [perHeadFee, setPerHeadFee] = useState(1200) // Env fee, Lagoon entrance, Insurance
+const AVAILABLE_ITEMS: Item[] = [
+  { name: 'El Nido Island Tour A', price: 1200, category: 'Tour Packages' },
+  { name: 'El Nido Island Tour B', price: 1300, category: 'Tour Packages' },
+  { name: 'El Nido Island Tour C', price: 1400, category: 'Tour Packages' },
+  { name: 'Chasing Sunset Tour', price: 1500, category: 'Tour Packages' },
+  { name: 'Airport Transfer (PPS - ENI)', price: 600, category: 'Transport & Fees' },
+  { name: 'Environmental Fee', price: 200, category: 'Transport & Fees' },
+  { name: 'Lagoon Entrance Fee', price: 200, category: 'Transport & Fees' },
+  { name: 'Travel Insurance', price: 150, category: 'Add-ons' },
+];
 
-  // Margin Slider State
-  const [markupPercent, setMarkupPercent] = useState(15)
-  const companySplitPercent = 50 
+export default function QuotationBuilderPage() {
+  const [client, setClient] = useState('');
+  const [selectedItems, setSelectedItems] = useState<Item[]>([
+    AVAILABLE_ITEMS[0],
+    AVAILABLE_ITEMS[4],
+    AVAILABLE_ITEMS[5],
+  ]);
+  const [notes, setNotes] = useState('Includes boat transfer, buffet lunch, and required fees.');
+  const [downloaded, setDownloaded] = useState(false);
 
-  // Real-time calculation triggers instantly when sliders/inputs change
-  const quote = useMemo(() => {
-    return calculateQuote({
-      vanRental, guideFee, accommodation, headcount, perHeadFee, markupPercent, companySplitPercent
-    })
-  }, [vanRental, guideFee, accommodation, headcount, perHeadFee, markupPercent])
-
-  const handleGenerateInvoice = () => {
-    if (quote.isLossRisk) {
-      alert("Cannot generate invoice: Margin is below the 10% company minimum.")
-      return
+  const handleAddItem = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const itemName = e.target.value;
+    if (!itemName) return;
+    const found = AVAILABLE_ITEMS.find((i) => i.name === itemName);
+    if (found && !selectedItems.some((i) => i.name === found.name)) {
+      setSelectedItems([...selectedItems, found]);
     }
-    alert(`Generating Paymongo Link for ${clientName}... Total: PHP ${quote.clientTotalPrice.toLocaleString()}`)
-  }
+    e.target.value = '';
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setSelectedItems(selectedItems.filter((_, i) => i !== index));
+  };
+
+  const totalAmount = selectedItems.reduce((sum, item) => sum + item.price, 0);
+
+  const handleGeneratePDF = () => {
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 3000);
+  };
 
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto pb-12 p-6">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Quotation Builder</h1>
-        <p className="text-slate-500">Draft custom tour packages and adjust B2B margins in real-time.</p>
+        <h1 className="text-2xl font-bold text-gray-900">PDF Invoice & Quotation Generator</h1>
+        <p className="text-sm text-gray-600">Select multiple tour packages, transport options, and fees to bundle into an invoice.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-amber-200 space-y-6">
+        <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Invoice & Package Details</h2>
         
-        {/* Left Column: Data Entry */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h2 className="text-lg font-bold mb-4">Client Details & Base Costs</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Select Client</label>
-                <input type="text" placeholder="e.g., Juan Dela Cruz" value={clientName} onChange={(e) => setClientName(e.target.value)} className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Van Rental (PHP)</label>
-                <input type="number" value={vanRental} onChange={(e) => setVanRental(Number(e.target.value))} className="w-full p-2 border border-slate-300 rounded" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Guide Fee (PHP)</label>
-                <input type="number" value={guideFee} onChange={(e) => setGuideFee(Number(e.target.value))} className="w-full p-2 border border-slate-300 rounded" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Accommodation (PHP)</label>
-                <input type="number" value={accommodation} onChange={(e) => setAccommodation(Number(e.target.value))} className="w-full p-2 border border-slate-300 rounded" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Headcount</label>
-                <input type="number" value={headcount} onChange={(e) => setHeadcount(Number(e.target.value))} className="w-full p-2 border border-slate-300 rounded" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Per Head Fees (Env/Entrance/Insurance)</label>
-                <input type="number" value={perHeadFee} onChange={(e) => setPerHeadFee(Number(e.target.value))} className="w-full p-2 border border-slate-300 rounded" />
-              </div>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Client Name</label>
+            <input
+              type="text"
+              value={client}
+              onChange={(e) => setClient(e.target.value)}
+              placeholder="e.g., Juan Dela Cruz"
+              className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c89134]"
+            />
           </div>
 
-          {/* The Innovation Feature Slider */}
-          <div className="bg-blue-50 p-6 rounded-xl shadow-sm border border-blue-200">
-            <h2 className="text-lg font-bold text-blue-800 mb-2">Innovation: Affiliate Margin Slider</h2>
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-sm font-medium text-blue-900">Adjust Markup %</span>
-              <span className="text-xl font-bold text-blue-700">{markupPercent}%</span>
-            </div>
-            <input type="range" min="5" max="40" value={markupPercent} onChange={(e) => setMarkupPercent(Number(e.target.value))} className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer" />
-            {quote.isLossRisk && (
-              <p className="text-red-600 text-sm font-semibold mt-2">Warning: Markup is below the 10% minimum safety floor.</p>
+          {/* Clean selection area with active tags shown right below the dropdown input */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Add Offerings / Fees</label>
+            <select
+              onChange={handleAddItem}
+              defaultValue=""
+              className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c89134] bg-white cursor-pointer"
+            >
+              <option value="" disabled>+ Choose item to add...</option>
+              <optgroup label="Tour Packages">
+                {AVAILABLE_ITEMS.filter(i => i.category === 'Tour Packages').map(item => (
+                  <option key={item.name} value={item.name}>{item.name} - ₱{item.price.toLocaleString()}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Transport & Fees">
+                {AVAILABLE_ITEMS.filter(i => i.category === 'Transport & Fees').map(item => (
+                  <option key={item.name} value={item.name}>{item.name} - ₱{item.price.toLocaleString()}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Add-ons">
+                {AVAILABLE_ITEMS.filter(i => i.category === 'Add-ons').map(item => (
+                  <option key={item.name} value={item.name}>{item.name} - ₱{item.price.toLocaleString()}</option>
+                ))}
+              </optgroup>
+            </select>
+
+            {/* Neat active tags preview right under the selector box */}
+            {selectedItems.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2.5">
+                {selectedItems.map((item, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1.5 bg-[#fcfbf9] border border-amber-200/80 text-gray-800 text-xs px-2.5 py-1 rounded-lg shadow-2xs font-medium"
+                  >
+                    <span>{item.name}</span>
+                    <span className="text-[#c89134] font-semibold">₱{item.price.toLocaleString()}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(index)}
+                      className="text-gray-400 hover:text-red-500 transition ml-0.5"
+                      title="Remove"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
             )}
           </div>
         </div>
 
-        {/* Right Column: Invoice Summary */}
-        <div className="bg-slate-900 text-white p-6 rounded-xl shadow-sm h-fit sticky top-6">
-          <h2 className="text-xl font-bold mb-6 border-b border-slate-700 pb-4">Internal Profit Breakdown</h2>
-          
-          <div className="space-y-4 text-sm">
-            <div className="flex justify-between">
-              <span className="text-slate-400">Base Wholesale Cost</span>
-              <span className="font-medium">PHP {quote.baseCost.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-blue-400">
-              <span>Affiliate Commission (50%)</span>
-              <span className="font-medium">PHP {quote.affiliateCommission.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-emerald-400">
-              <span>JazGot Net Margin (50%)</span>
-              <span className="font-medium">PHP {quote.companyProfit.toLocaleString()}</span>
-            </div>
-          </div>
-          
-          <div className="mt-6 pt-6 border-t border-slate-700">
-            <p className="text-slate-400 text-sm mb-1">Final Client Price</p>
-            <p className="text-3xl font-bold">PHP {quote.clientTotalPrice.toLocaleString()}</p>
-          </div>
-
-          <button 
-            onClick={handleGenerateInvoice}
-            disabled={quote.isLossRisk}
-            className={`w-full mt-8 py-3 rounded-lg font-bold transition-colors ${
-              quote.isLossRisk ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 text-white'
-            }`}
-          >
-            Generate Paymongo Link
-          </button>
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Inclusions / Custom Notes</label>
+          <textarea
+            rows={2}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c89134]"
+          />
         </div>
 
+        {/* Clean PDF Preview Box */}
+        <div className="bg-[#fcfbf9] border border-amber-200/80 rounded-xl p-5 space-y-4">
+          <div className="flex justify-between items-center border-b border-amber-200/50 pb-3">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-[#c89134]">JazGot Travel & Tours</span>
+              <h3 className="text-base font-bold text-gray-900">Official Quotation / Invoice Preview</h3>
+            </div>
+            <span className="text-xs text-gray-500">Ref: INV-{Math.floor(Math.random() * 90000 + 10000)}</span>
+          </div>
+
+          <div className="text-sm space-y-3 text-gray-700">
+            <p><strong className="text-gray-900">Billed To:</strong> {client || '[Client Name Placeholder]'}</p>
+            
+            <div>
+              <strong className="text-gray-900 block mb-2">Selected Items & Fees:</strong>
+              {selectedItems.length === 0 ? (
+                <p className="text-xs text-gray-400 italic">No items selected yet. Use the dropdown above to add tours, transport, or fees.</p>
+              ) : (
+                <div className="space-y-1.5 border border-amber-100 rounded-lg bg-white p-3">
+                  {selectedItems.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0 text-xs sm:text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-800">{item.name}</span>
+                        <span className="text-[10px] bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200/60">{item.category}</span>
+                      </div>
+                      <span className="font-bold text-gray-900">₱{item.price.toLocaleString()}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center pt-2.5 mt-2 border-t border-gray-200 font-bold text-sm text-gray-900">
+                    <span>Total Amount:</span>
+                    <span className="text-[#c89134] text-base">₱{totalAmount.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <p className="pt-1"><strong className="text-gray-900">Notes:</strong> {notes}</p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <button
+            onClick={handleGeneratePDF}
+            className="flex-1 bg-[#c89134] hover:bg-[#b07c29] text-white py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition shadow-sm"
+          >
+            {downloaded ? <FiCheckCircle size={16} /> : <FiDownload size={16} />}
+            {downloaded ? 'PDF Downloaded Successfully!' : 'Download PDF Invoice'}
+          </button>
+          <button
+            onClick={() => alert(`Invoice sent directly to ${client || 'the client'}`)}
+            className="flex-1 bg-[#2c221e] hover:bg-[#3a2e29] text-white py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition shadow-sm"
+          >
+            <FiSend size={16} /> Send PDF via Email / Viber
+          </button>
+        </div>
       </div>
     </div>
-  )
+  );
 }
