@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { FiDownload, FiSend, FiCheckCircle, FiTrash2 } from 'react-icons/fi';
+import { FiDownload, FiSend, FiCheckCircle, FiCpu, FiLoader, FiZap } from 'react-icons/fi';
 
 interface Item {
   name: string;
@@ -19,8 +19,12 @@ const AVAILABLE_ITEMS: Item[] = [
   { name: 'Travel Insurance', price: 150, category: 'Add-ons' },
 ];
 
-export default function QuotationBuilderPage() {
+export default function QuotationPage() {
   const [client, setClient] = useState('');
+  const [rawMessage, setRawMessage] = useState('');
+  const [isParsing, setIsParsing] = useState(false);
+  const [parseSuccess, setParseSuccess] = useState(false);
+
   const [selectedItems, setSelectedItems] = useState<Item[]>([
     AVAILABLE_ITEMS[0],
     AVAILABLE_ITEMS[4],
@@ -28,6 +32,27 @@ export default function QuotationBuilderPage() {
   ]);
   const [notes, setNotes] = useState('Includes boat transfer, buffet lunch, and required fees.');
   const [downloaded, setDownloaded] = useState(false);
+
+  // Simulated AI Copilot Parsing Action
+  const handleParseWithAICopilot = () => {
+    if (!rawMessage.trim()) return;
+    setIsParsing(true);
+    setParseSuccess(false);
+
+    setTimeout(() => {
+      setClient('Juan Dela Cruz (via FB Messenger)');
+      setSelectedItems([
+        AVAILABLE_ITEMS[0], // Tour A
+        AVAILABLE_ITEMS[2], // Tour C
+        AVAILABLE_ITEMS[4], // Airport Transfer
+        AVAILABLE_ITEMS[7], // Travel Insurance
+      ]);
+      setNotes('Parsed via AI Copilot: 4D3N stay requested, 4 Adults headcount. Checked and ready for final review.');
+      setIsParsing(false);
+      setParseSuccess(true);
+      setTimeout(() => setParseSuccess(false), 4000);
+    }, 1200);
+  };
 
   const handleAddItem = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const itemName = e.target.value;
@@ -53,10 +78,60 @@ export default function QuotationBuilderPage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">PDF Invoice & Quotation Generator</h1>
-        <p className="text-sm text-gray-600">Select multiple tour packages, transport options, and fees to bundle into an invoice.</p>
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Owner & Sales Workspace</span>
+        <h1 className="text-2xl font-bold text-gray-900 mt-0.5">PDF Invoice & Quotation Generator</h1>
+        <p className="text-sm text-gray-600">Parse messy client chats automatically with AI or build invoices manually.</p>
       </div>
 
+      {/* AI Conversational Itinerary Parser Widget */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-4 gap-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-amber-50 rounded-xl text-[#c89134] border border-amber-200/60 shadow-2xs">
+              <FiZap size={20} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-gray-900">AI-Powered Conversational Itinerary Parser</h3>
+              <p className="text-xs text-gray-500">Paste raw client chats (Messenger, Viber, SMS) to auto-fill quotation fields.</p>
+            </div>
+          </div>
+          {parseSuccess && (
+            <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-medium self-start sm:self-auto">
+              <FiCheckCircle size={14} className="text-green-600" /> Successfully Parsed & Auto-Filled!
+            </span>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <textarea
+            rows={3}
+            value={rawMessage}
+            onChange={(e) => setRawMessage(e.target.value)}
+            placeholder={`e.g., "Hi, balak namin mag El Nido 4D3N next month, 4 adults kami na may kasamang airport transfer tapos gusto namin sumali sa Island Tour A at C, meron ba kayong kasamang insurance?"`}
+            className="w-full px-4 py-3 bg-gray-50/50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#c89134] focus:bg-white transition"
+          />
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleParseWithAICopilot}
+              disabled={isParsing}
+              className="bg-[#c89134] hover:bg-[#b07c29] text-white px-5 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 transition shadow-sm disabled:opacity-50 cursor-pointer"
+            >
+              {isParsing ? (
+                <>
+                  <FiLoader className="animate-spin" size={16} /> Parsing with Gemini AI...
+                </>
+              ) : (
+                <>
+                  <FiCpu size={16} /> Parse with AI Copilot
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Quotation Form */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-amber-200 space-y-6">
         <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Invoice & Package Details</h2>
         
@@ -72,7 +147,6 @@ export default function QuotationBuilderPage() {
             />
           </div>
 
-          {/* Clean selection area with active tags shown right below the dropdown input */}
           <div>
             <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Add Offerings / Fees</label>
             <select
@@ -98,7 +172,6 @@ export default function QuotationBuilderPage() {
               </optgroup>
             </select>
 
-            {/* Neat active tags preview right under the selector box */}
             {selectedItems.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-2.5">
                 {selectedItems.map((item, index) => (
@@ -176,15 +249,17 @@ export default function QuotationBuilderPage() {
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <button
+            type="button"
             onClick={handleGeneratePDF}
-            className="flex-1 bg-[#c89134] hover:bg-[#b07c29] text-white py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition shadow-sm"
+            className="flex-1 bg-[#c89134] hover:bg-[#b07c29] text-white py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition shadow-sm cursor-pointer"
           >
             {downloaded ? <FiCheckCircle size={16} /> : <FiDownload size={16} />}
             {downloaded ? 'PDF Downloaded Successfully!' : 'Download PDF Invoice'}
           </button>
           <button
+            type="button"
             onClick={() => alert(`Invoice sent directly to ${client || 'the client'}`)}
-            className="flex-1 bg-[#2c221e] hover:bg-[#3a2e29] text-white py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition shadow-sm"
+            className="flex-1 bg-[#2c221e] hover:bg-[#3a2e29] text-white py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition shadow-sm cursor-pointer"
           >
             <FiSend size={16} /> Send PDF via Email / Viber
           </button>

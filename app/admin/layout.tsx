@@ -11,7 +11,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             JGT Admin Portal
           </div>
           {/* Navigation with soft, light-tinted borders */}
-          <nav className="mt-4 px-3 space-y-3 text-sm font-medium">
+          <nav className="mt-4 px-3 space-y-3 text-sm font-mediumS">
             <Link href="/admin" className="flex items-center gap-3.5 px-4 py-3.5 bg-[#c89134] hover:bg-[#b57d26] border border-[#f3d9a4]/60 rounded-xl transition text-white shadow-sm">
               <FiHome size={18} /> Home / Dashboard
             </Link>
