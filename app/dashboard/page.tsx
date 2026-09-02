@@ -9,7 +9,7 @@ import { toast } from "sonner"
 export default function DashboardPage() {
   // State to handle the expandable invoice details
   const [isExpanded, setIsExpanded] = useState(true) 
-  
+
   // Ref to target the invoice container for the PDF snapshot
   const invoiceRef = useRef<HTMLDivElement>(null)
 
@@ -25,16 +25,16 @@ export default function DashboardPage() {
         scale: 2, // Higher scale for better PDF quality
         backgroundColor: "#ffffff",
       })
-      
+
       const imgData = canvas.toDataURL("image/png")
       const pdf = new jsPDF("p", "mm", "a4")
-      
+
       const pdfWidth = pdf.internal.pageSize.getWidth()
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight)
       pdf.save("JazGot_Invoice_JZT-84729.pdf")
-      
+
       toast.dismiss()
       toast.success("Invoice downloaded successfully!")
     } catch (error) {
@@ -48,7 +48,7 @@ export default function DashboardPage() {
     <SiteShell>
       <div className="min-h-[70vh] bg-slate-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
         <div className="max-w-4xl mx-auto">
-          
+
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-slate-900">My Dashboard</h1>
             <p className="text-slate-500 mt-1">Manage your bookings and invoices.</p>
@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
           {/* Target this specific wrapper for the PDF */}
           <div ref={invoiceRef} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            
+
             {/* Card Header */}
             <div 
               onClick={() => setIsExpanded(!isExpanded)}
@@ -69,7 +69,7 @@ export default function DashboardPage() {
                 <h2 className="text-xl font-bold text-slate-900">El Nido Island Hopping Tour A</h2>
                 <p className="text-sm text-slate-500 mt-1">Booking Ref: #JZT-84729</p>
               </div>
-              
+
               <div className="mt-4 md:mt-0 text-left md:text-right flex items-center gap-6">
                 <div>
                   <p className="text-xs text-slate-500 uppercase tracking-wider">Total Paid</p>
@@ -86,7 +86,7 @@ export default function DashboardPage() {
             {isExpanded && (
               <div className="p-6 border-t border-slate-100 bg-slate-50/50">
                 <h3 className="font-bold text-slate-900 mb-4">Invoice & Itinerary Details</h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
                   {/* Left: Customer Info */}
                   <div className="space-y-4">
@@ -116,7 +116,7 @@ export default function DashboardPage() {
                     </ul>
                   </div>
                 </div>
-                
+
                 {/* Download Button (data-html2canvas-ignore hides this button from the actual PDF printout!) */}
                 <div data-html2canvas-ignore className="mt-8 pt-6 border-t border-slate-200 flex gap-3">
                   <button 
@@ -131,7 +131,7 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
-            
+
           </div>
         </div>
       </div>
