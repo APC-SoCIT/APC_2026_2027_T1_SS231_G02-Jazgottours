@@ -14,20 +14,46 @@ export default function CheckoutPage() {
     toast.dismiss()
   }, [])
 
-  const handlePayment = (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsProcessing(true)
-    
-    // 2. UPDATE TOAST MESSAGE for Paymongo
-    toast.loading("Redirecting to Paymongo Secure Checkout...")
+    toast.loading("Connecting to Paymongo Secure Checkout...")
 
-    // Note: In your actual backend integration, you will request a Checkout URL 
-    // from Paymongo here and use `window.location.href = url` to redirect them.
-    setTimeout(() => {
+    try {
+      // Send data to your new backend API
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // Note: In a full app, you will pull these values from your React state/context
+          userId: null, 
+          tourPackage: "El Nido Island Hopping Tour A",
+          leadGuestName: "Juan Dela Cruz",
+          pax: 1,
+          tourDate: "2026-10-25",
+          contactNumber: "+639000000000",
+          totalAmount: 1350,
+          
+          // --> ADDED: This captures your exact active Codespace URL and sends it to the backend
+          origin: window.location.origin 
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.url) {
+        toast.dismiss()
+        // This physically redirects the browser to Paymongo's checkout screen
+        window.location.href = data.url 
+      } else {
+        throw new Error(data.error || "Failed to generate checkout link")
+      }
+    } catch (error) {
+      console.error(error)
       toast.dismiss()
-      toast.success("Payment successful! Your booking is confirmed.")
-      router.push("/dashboard") 
-    }, 2500)
+      toast.error("Could not connect to payment gateway. Please try again.")
+      setIsProcessing(false)
+    }
   }
 
   return (
