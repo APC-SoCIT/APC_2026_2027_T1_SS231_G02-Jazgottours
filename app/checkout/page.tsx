@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { SiteShell } from "@/components/site-shell"
@@ -9,16 +9,23 @@ export default function CheckoutPage() {
   const router = useRouter()
   const [isProcessing, setIsProcessing] = useState(false)
 
+  // 1. FIX THE STUCK TOAST: Clear any lingering toasts when this page loads
+  useEffect(() => {
+    toast.dismiss()
+  }, [])
+
   const handlePayment = (e: React.FormEvent) => {
     e.preventDefault()
     setIsProcessing(true)
     
-    toast.loading("Processing payment securely via Paymongo...")
+    // 2. UPDATE TOAST MESSAGE for Paymongo
+    toast.loading("Redirecting to Paymongo Secure Checkout...")
 
+    // Note: In your actual backend integration, you will request a Checkout URL 
+    // from Paymongo here and use `window.location.href = url` to redirect them.
     setTimeout(() => {
       toast.dismiss()
       toast.success("Payment successful! Your booking is confirmed.")
-      // CHANGED: Route to the new dashboard page
       router.push("/dashboard") 
     }, 2500)
   }
@@ -58,45 +65,30 @@ export default function CheckoutPage() {
             <h2 className="text-2xl font-bold text-slate-900 mb-6">Payment Details</h2>
             
             <form onSubmit={handlePayment} className="space-y-5">
-              {/* Payment Method Toggles */}
-              <div className="flex gap-4 mb-6">
-                <label className="flex-1 border border-amber-500 bg-amber-50 rounded-lg p-3 cursor-pointer text-center font-medium text-amber-900 ring-2 ring-amber-500 transition-all">
-                  <input type="radio" name="payment" className="hidden" defaultChecked />
-                  Credit Card
-                </label>
-                <label className="flex-1 border border-slate-200 hover:bg-slate-50 rounded-lg p-3 cursor-pointer text-center font-medium text-slate-600 transition-all">
-                  <input type="radio" name="payment" className="hidden" />
-                  GCash / Maya
-                </label>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Cardholder Name</label>
-                <input type="text" required placeholder="Juan Dela Cruz" className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ce9136] outline-none text-slate-900" />
-              </div>
               
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Card Number</label>
-                <input type="text" required placeholder="0000 0000 0000 0000" className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ce9136] outline-none text-slate-900" />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Expiry Date</label>
-                  <input type="text" required placeholder="MM/YY" className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ce9136] outline-none text-slate-900" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">CVC</label>
-                  <input type="text" required placeholder="123" className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#ce9136] outline-none text-slate-900" />
+              {/* 3. REMOVED RAW CARD INPUTS & ADDED SECURE PAYMENT NOTICE */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-center">
+                <svg className="w-12 h-12 text-amber-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">Secure Payment via Paymongo</h3>
+                <p className="text-sm text-slate-600 mb-4">
+                  To ensure your security, we do not store your credit card information. You will be redirected to Paymongo's encrypted checkout gateway to complete your purchase.
+                </p>
+                
+                <div className="flex justify-center gap-3 text-xs font-medium text-slate-500">
+                  <span className="bg-white px-2 py-1 rounded border border-slate-200">Credit / Debit Card</span>
+                  <span className="bg-white px-2 py-1 rounded border border-slate-200">GCash</span>
+                  <span className="bg-white px-2 py-1 rounded border border-slate-200">Maya</span>
                 </div>
               </div>
               
               <button 
                 type="submit" 
                 disabled={isProcessing}
-                className="w-full bg-[#ce9136] hover:bg-[#b87d2b] text-white py-3 rounded-lg font-bold transition-colors mt-6 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full bg-[#ce9136] hover:bg-[#b87d2b] text-white py-4 rounded-lg font-bold transition-colors mt-6 disabled:opacity-70 disabled:cursor-not-allowed text-lg shadow-sm"
               >
-                {isProcessing ? "Processing..." : "Pay ₱1,350.00"}
+                {isProcessing ? "Connecting to Paymongo..." : "Proceed to Secure Payment"}
               </button>
             </form>
           </div>
