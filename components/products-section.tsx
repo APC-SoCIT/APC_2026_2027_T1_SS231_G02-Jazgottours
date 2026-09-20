@@ -103,7 +103,7 @@ export function ProductsSection() {
         </button>
       </div>
 
-      <div className="mx-auto mt-10 grid max-w-5xl gap-6 sm:grid-cols-3">
+      <div className="mx-auto mt-10 grid max-w-5xl gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {tours.map((tour) => (
           <div 
             key={tour.id} 
@@ -170,11 +170,11 @@ export function ProductsSection() {
       {/* 2. BOOKING MODAL WITH ADD-ONS */}
       {isLoggedIn && selectedTour && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl overflow-hidden max-w-5xl w-full max-h-[90vh] shadow-2xl flex flex-col md:flex-row">
+          <div className="bg-white rounded-xl overflow-y-auto md:overflow-hidden max-w-5xl w-full max-h-[90vh] shadow-2xl flex flex-col md:flex-row">
             
             {/* LEFT COLUMN: Tour Details */}
-            <div className="md:w-1/2 bg-white overflow-y-auto flex flex-col">
-              <div className="h-48 w-full relative shrink-0">
+            <div className="md:w-1/2 bg-white md:overflow-y-auto flex flex-col">
+              <div className="h-48 md:h-64 lg:h-72 w-full relative shrink-0">
                 <img 
                   src={selectedTour.image || selectedTour.imageUrl || "/placeholder-tour.jpg"} 
                   alt={selectedTour.title || selectedTour.name} 
@@ -215,7 +215,7 @@ export function ProductsSection() {
             </div>
 
             {/* RIGHT COLUMN: Booking Form & Add-ons */}
-            <div className="md:w-1/2 bg-slate-50 p-6 md:p-8 flex flex-col justify-between border-t md:border-t-0 md:border-l border-slate-200 shrink-0 overflow-y-auto">
+            <div className="md:w-1/2 bg-slate-50 p-6 md:p-8 flex flex-col justify-between border-t md:border-t-0 md:border-l border-slate-200 shrink-0 md:overflow-y-auto">
               <div>
                 <div className="mb-6 flex justify-between items-start">
                   <div>
@@ -240,7 +240,7 @@ export function ProductsSection() {
                     />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-1">Number of Pax</label>
                       <input 
