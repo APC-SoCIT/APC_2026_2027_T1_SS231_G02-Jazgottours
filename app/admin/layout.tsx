@@ -3,47 +3,111 @@ import { FiHome, FiPackage, FiFileText, FiUsers, FiLogOut } from 'react-icons/fi
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen bg-[#fcfbf9] font-sans">
-      {/* Admin Sidebar */}
-      <aside className="w-64 bg-[#c89134] text-white flex flex-col justify-between hidden md:flex border-r border-[#b07c29]">
-        <div>
-          <div className="px-6 py-6 text-xl font-bold tracking-wider border-b border-[#b07c29] text-white">
-            JGT Admin Portal
+    <div className="flex h-screen bg-[#f4f1ea] font-sans antialiased text-slate-800 overflow-hidden">
+      {/* Admin Sidebar with Rich Mustard-Amber Glass & Soft Multi-Stop Gradient */}
+      <aside className="w-72 bg-gradient-to-b from-[#eadecb] via-[#e5cfb1] to-[#d6b589] backdrop-blur-xl text-slate-800 flex flex-col justify-between hidden md:flex border-r border-[#c29d6d]/40 shadow-[0_8px_30px_rgb(180,130,60,0.12)] relative overflow-hidden">
+        
+        {/* Soft atmospheric gradient glows behind the glass to create depth without harshness */}
+        <div className="absolute -top-12 -left-12 w-44 h-44 bg-gradient-to-br from-[#dfa241]/30 to-[#c88422]/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div className="absolute bottom-12 -right-12 w-44 h-44 bg-gradient-to-tl from-[#e3af58]/25 to-transparent rounded-full blur-2xl pointer-events-none"></div>
+
+        <div className="relative z-10">
+          {/* Brand Header with Richer Mustard Tone */}
+          <div className="px-6 py-7 border-b border-[#c29d6d]/30 flex items-center gap-3.5 bg-white/30 backdrop-blur-md">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#d99732] to-[#b8731b] text-white font-bold flex items-center justify-center text-base shadow-md shadow-amber-900/10 border border-white/40">
+              J
+            </div>
+            <div>
+              <h2 className="text-sm font-bold tracking-wide text-slate-900 leading-tight">JGT Admin Portal</h2>
+              <p className="text-[10px] text-[#9c661d] font-bold tracking-widest uppercase mt-0.5">Management System</p>
+            </div>
           </div>
-          {/* Navigation with soft, light-tinted borders */}
-          <nav className="mt-4 px-3 space-y-3 text-sm font-mediumS">
-            <Link href="/admin" className="flex items-center gap-3.5 px-4 py-3.5 bg-[#c89134] hover:bg-[#b57d26] border border-[#f3d9a4]/60 rounded-xl transition text-white shadow-sm">
-              <FiHome size={18} /> Home / Dashboard
+
+          {/* Jelly / Glass Navigation Cards with Warm Mustard Accents */}
+          <nav className="mt-6 px-4 space-y-2 text-sm font-medium">
+            <Link 
+              href="/admin" 
+              className="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all text-slate-700 hover:text-slate-950 bg-white/50 hover:bg-white/80 active:scale-[0.98] border border-white/60 hover:border-[#c29d6d]/60 shadow-[0_2px_12px_rgb(150,100,30,0.04)] group"
+            >
+              <div className="p-2 rounded-xl bg-gradient-to-br from-[#dfa241] to-[#bf7b20] text-white group-hover:scale-105 transition-all shadow-xs">
+                <FiHome size={16} />
+              </div> 
+              <span className="font-semibold tracking-wide">Dashboard</span>
             </Link>
-            <Link href="/admin/products" className="flex items-center gap-3.5 px-4 py-3.5 bg-[#c89134] hover:bg-[#b57d26] border border-[#f3d9a4]/60 rounded-xl transition text-white shadow-sm">
-              <FiPackage size={18} /> Products / Packages
+
+            <Link 
+              href="/admin/products" 
+              className="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all text-slate-700 hover:text-slate-950 bg-white/50 hover:bg-white/80 active:scale-[0.98] border border-white/60 hover:border-[#c29d6d]/60 shadow-[0_2px_12px_rgb(150,100,30,0.04)] group"
+            >
+              <div className="p-2 rounded-xl bg-gradient-to-br from-[#dfa241] to-[#bf7b20] text-white group-hover:scale-105 transition-all shadow-xs">
+                <FiPackage size={16} />
+              </div> 
+              <span className="font-semibold tracking-wide">Services & Products</span>
             </Link>
-            <Link href="/admin/quotation" className="flex items-center gap-3.5 px-4 py-3.5 bg-[#c89134] hover:bg-[#b57d26] border border-[#f3d9a4]/60 rounded-xl transition text-white shadow-sm">
-              <FiFileText size={18} /> Quotation
+
+            <Link 
+              href="/admin/quotation" 
+              className="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all text-slate-700 hover:text-slate-950 bg-white/50 hover:bg-white/80 active:scale-[0.98] border border-white/60 hover:border-[#c29d6d]/60 shadow-[0_2px_12px_rgb(150,100,30,0.04)] group"
+            >
+              <div className="p-2 rounded-xl bg-gradient-to-br from-[#dfa241] to-[#bf7b20] text-white group-hover:scale-105 transition-all shadow-xs">
+                <FiFileText size={16} />
+              </div> 
+              <span className="font-semibold tracking-wide">Quotation</span>
             </Link>
-            <Link href="/admin/invoices" className="flex items-center gap-3.5 px-4 py-3.5 bg-[#c89134] hover:bg-[#b57d26] border border-[#f3d9a4]/60 rounded-xl transition text-white shadow-sm">
-              <span className="font-bold text-base px-0.5">₱</span> Invoices
+
+            <Link 
+              href="/admin/invoices" 
+              className="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all text-slate-700 hover:text-slate-950 bg-white/50 hover:bg-white/80 active:scale-[0.98] border border-white/60 hover:border-[#c29d6d]/60 shadow-[0_2px_12px_rgb(150,100,30,0.04)] group"
+            >
+              <div className="p-2 rounded-xl bg-gradient-to-br from-[#dfa241] to-[#bf7b20] text-white group-hover:scale-105 transition-all shadow-xs flex items-center justify-center w-8 h-8 font-bold">
+                ₱
+              </div> 
+              <span className="font-semibold tracking-wide">Invoices</span>
             </Link>
-            <Link href="/admin/clients" className="flex items-center gap-3.5 px-4 py-3.5 bg-[#c89134] hover:bg-[#b57d26] border border-[#f3d9a4]/60 rounded-xl transition text-white shadow-sm">
-              <FiUsers size={18} /> Clients
+
+            <Link 
+              href="/admin/clients" 
+              className="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all text-slate-700 hover:text-slate-950 bg-white/50 hover:bg-white/80 active:scale-[0.98] border border-white/60 hover:border-[#c29d6d]/60 shadow-[0_2px_12px_rgb(150,100,30,0.04)] group"
+            >
+              <div className="p-2 rounded-xl bg-gradient-to-br from-[#dfa241] to-[#bf7b20] text-white group-hover:scale-105 transition-all shadow-xs">
+                <FiUsers size={16} />
+              </div> 
+              <span className="font-semibold tracking-wide">Clients</span>
             </Link>
           </nav>
         </div>
 
-        {/* Exit / Back to Public Site with "N" badge removed */}
-        <div className="p-4 border-t border-[#b07c29]">
-          <Link href="/" className="flex items-center justify-center gap-2.5 w-full py-2.5 bg-[#2c221e] hover:bg-[#1a1311] rounded-lg text-sm font-medium transition text-white shadow-sm">
-            <FiLogOut size={16} /> Exit to Public Site
+        {/* Exit / Back to Public Site Footer */}
+        <div className="p-4 border-t border-[#c29d6d]/30 bg-white/30 backdrop-blur-md relative z-10">
+          <Link 
+            href="/" 
+            className="flex items-center justify-center gap-2.5 w-full py-3 bg-[#3d2e1b] hover:bg-[#261d11] active:scale-[0.98] rounded-xl text-xs font-bold uppercase tracking-wider transition-all text-amber-100 shadow-md border border-amber-900/30"
+          >
+            <FiLogOut size={15} /> Exit to Public Site
           </Link>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-y-auto">
-        <header className="bg-white shadow-sm px-8 py-5 flex justify-between items-center border-b border-amber-100">
-          <span className="text-sm font-semibold text-gray-700">Owner & Sales Workspace</span>
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <header className="bg-white/70 backdrop-blur-md shadow-xs px-8 py-4 flex justify-between items-center border-b border-amber-200/50 z-10">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs font-bold tracking-wider uppercase text-slate-500">Owner & Sales Workspace</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <p className="text-xs font-bold text-slate-800">Administrator</p>
+              <p className="text-[10px] text-slate-400">Active Session</p>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-amber-100 border border-amber-200 text-amber-900 flex items-center justify-center font-bold text-xs shadow-xs">
+              AD
+            </div>
+          </div>
         </header>
-        <main className="flex-1 p-2 md:p-4">
+
+        {/* Main View Area */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8 bg-[#f5f2eb]">
           {children}
         </main>
       </div>
