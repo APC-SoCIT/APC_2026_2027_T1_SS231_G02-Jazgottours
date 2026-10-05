@@ -1,270 +1,411 @@
 'use client';
+
 import { useState } from 'react';
-import { FiDownload, FiSend, FiCheckCircle, FiCpu, FiLoader, FiZap } from 'react-icons/fi';
+import { createClient } from '@supabase/supabase-js';
 
-interface Item {
-  name: string;
-  price: number;
-  category: string;
-}
+const supabase = createClient(
+  'https://ahvfnuwdglbohtxwmrfc.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFodmZudXdkZ2xib2h0eHdtcmZjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1NzY4ODEsImV4cCI6MjEwMzE1Mjg4MX0.F6vljBSLGHoNFL1D5gRjkj--0s3EF2epzjb6YOa7G7s'
+);
 
-const AVAILABLE_ITEMS: Item[] = [
-  { name: 'El Nido Island Tour A', price: 1200, category: 'Tour Packages' },
-  { name: 'El Nido Island Tour B', price: 1300, category: 'Tour Packages' },
-  { name: 'El Nido Island Tour C', price: 1400, category: 'Tour Packages' },
-  { name: 'Chasing Sunset Tour', price: 1500, category: 'Tour Packages' },
-  { name: 'Airport Transfer (PPS - ENI)', price: 600, category: 'Transport & Fees' },
-  { name: 'Environmental Fee', price: 200, category: 'Transport & Fees' },
-  { name: 'Lagoon Entrance Fee', price: 200, category: 'Transport & Fees' },
-  { name: 'Travel Insurance', price: 150, category: 'Add-ons' },
+const TOUR_PACKAGES = [
+  { id: 'tour-a', name: 'El Nido Island Hopping Tour A with Lunch', price: 1350 },
+  { id: 'tour-b', name: 'El Nido Island Hopping Tour B with Lunch', price: 1500 },
+  { id: 'tour-c', name: 'El Nido Island Hopping Tour C with Lunch', price: 1600 },
+];
+
+const ADD_ONS_LIST = [
+  { id: 'kayak', name: 'Transparent Kayak Rental', price: 500 },
+  { id: 'snorkel', name: 'Snorkeling Gear Set Rental', price: 300 },
+  { id: 'transfer', name: 'Private Van Transfer (PPS - El Nido roundtrip)', price: 3500 },
 ];
 
 export default function QuotationPage() {
-  const [client, setClient] = useState('');
-  const [rawMessage, setRawMessage] = useState('');
-  const [isParsing, setIsParsing] = useState(false);
-  const [parseSuccess, setParseSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<'manual' | 'ai'>('ai');
+  const [rawText, setRawText] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const [selectedItems, setSelectedItems] = useState<Item[]>([
-    AVAILABLE_ITEMS[0],
-    AVAILABLE_ITEMS[4],
-    AVAILABLE_ITEMS[5],
-  ]);
-  const [notes, setNotes] = useState('Includes boat transfer, buffet lunch, and required fees.');
-  const [downloaded, setDownloaded] = useState(false);
+  // Modal and feedback states
+  const [modalState, setModalState] = useState<{ isOpen: boolean; title: string; message: string; type: 'success' | 'error' }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'success',
+  });
 
-  // Simulated AI Copilot Parsing Action
-  const handleParseWithAICopilot = () => {
-    if (!rawMessage.trim()) return;
-    setIsParsing(true);
-    setParseSuccess(false);
+  const [clientName, setClientName] = useState('');
+  const [clientEmail, setClientEmail] = useState('');
+  const [clientContact, setClientContact] = useState('');
+  const [duration, setDuration] = useState('4D3N');
+  const [pax, setPax] = useState<number>(2);
+  
+  const [selectedPackageId, setSelectedPackageId] = useState<string>('tour-a');
+  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
 
-    setTimeout(() => {
-      setClient('Juan Dela Cruz (via FB Messenger)');
-      setSelectedItems([
-        AVAILABLE_ITEMS[0], // Tour A
-        AVAILABLE_ITEMS[2], // Tour C
-        AVAILABLE_ITEMS[4], // Airport Transfer
-        AVAILABLE_ITEMS[7], // Travel Insurance
-      ]);
-      setNotes('Parsed via AI Copilot: 4D3N stay requested, 4 Adults headcount. Checked and ready for final review.');
-      setIsParsing(false);
-      setParseSuccess(true);
-      setTimeout(() => setParseSuccess(false), 4000);
-    }, 1200);
-  };
+  const activePackage = TOUR_PACKAGES.find(p => p.id === selectedPackageId) || TOUR_PACKAGES[0];
+  const packageSubtotal = activePackage.price * Number(pax);
+  const addOnsSubtotal = selectedAddOns.reduce((sum, addOnId) => {
+    const addon = ADD_ONS_LIST.find(a => a.id === addOnId);
+    return sum + (addon ? addon.price : 0);
+  }, 0);
+  const totalAmount = packageSubtotal + addOnsSubtotal;
 
-  const handleAddItem = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const itemName = e.target.value;
-    if (!itemName) return;
-    const found = AVAILABLE_ITEMS.find((i) => i.name === itemName);
-    if (found && !selectedItems.some((i) => i.name === found.name)) {
-      setSelectedItems([...selectedItems, found]);
+  const handleAIParse = async () => {
+    if (!rawText.trim()) return;
+    setLoading(true);
+
+    try {
+      const res = await fetch('/admin/api/parse-quotation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawText }),
+      });
+
+      const result = await res.json();
+
+      if (result.success && result.data) {
+        const { client_name, client_email, client_contact, duration, pax, tour_activities } = result.data;
+        
+        if (client_name) setClientName(client_name);
+        if (client_email) setClientEmail(client_email);
+        if (client_contact) setClientContact(client_contact);
+        if (duration) setDuration(duration);
+        if (pax) setPax(pax);
+
+        if (tour_activities && tour_activities.length > 0) {
+          const matchedText = tour_activities[0].toLowerCase();
+          if (matchedText.includes('tour b')) setSelectedPackageId('tour-b');
+          else if (matchedText.includes('tour c')) setSelectedPackageId('tour-c');
+          else setSelectedPackageId('tour-a');
+        }
+
+        setActiveTab('manual');
+      } else {
+        setModalState({
+          isOpen: true,
+          title: 'Parsing Error',
+          message: 'Failed to parse message: ' + (result.error || 'Unknown error'),
+          type: 'error',
+        });
+      }
+    } catch (err: any) {
+      setModalState({
+        isOpen: true,
+        title: 'Network Error',
+        message: 'Network or parsing error: ' + err.message,
+        type: 'error',
+      });
     }
-    e.target.value = '';
+
+    setLoading(false);
   };
 
-  const handleRemoveItem = (index: number) => {
-    setSelectedItems(selectedItems.filter((_, i) => i !== index));
+  const handleAddOnToggle = (id: string) => {
+    if (selectedAddOns.includes(id)) {
+      setSelectedAddOns(selectedAddOns.filter(item => item !== id));
+    } else {
+      setSelectedAddOns([...selectedAddOns, id]);
+    }
   };
 
-  const totalAmount = selectedItems.reduce((sum, item) => sum + item.price, 0);
+  const handleSaveQuotation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const referenceNo = `Q-${Date.now().toString().slice(-6)}`;
 
-  const handleGeneratePDF = () => {
-    setDownloaded(true);
-    setTimeout(() => setDownloaded(false), 3000);
+    const { error } = await supabase
+      .from('quotations')
+      .insert([
+        {
+          reference_no: referenceNo,
+          client_name: clientName,
+          client_email: clientEmail,
+          client_contact: clientContact,
+          duration: duration,
+          pax: Number(pax),
+          status: 'Draft',
+          total_amount: totalAmount,
+        }
+      ]);
+
+    if (error) {
+      setModalState({
+        isOpen: true,
+        title: 'Database Error',
+        message: 'Error saving quotation record: ' + error.message,
+        type: 'error',
+      });
+    } else {
+      setModalState({
+        isOpen: true,
+        title: 'Action Successful',
+        message: `Quotation record reference number ${referenceNo} has been successfully saved to the registry.`,
+        type: 'success',
+      });
+    }
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12 p-6">
-      <div>
-        <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Owner & Sales Workspace</span>
-        <h1 className="text-2xl font-bold text-gray-900 mt-0.5">PDF Invoice & Quotation Generator</h1>
-        <p className="text-sm text-gray-600">Parse messy client chats automatically with AI or build invoices manually.</p>
-      </div>
-
-      {/* AI Conversational Itinerary Parser Widget */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-amber-200 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 pb-4 gap-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-amber-50 rounded-xl text-[#c89134] border border-amber-200/60 shadow-2xs">
-              <FiZap size={20} />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-gray-900">AI-Powered Conversational Itinerary Parser</h3>
-              <p className="text-xs text-gray-500">Paste raw client chats (Messenger, Viber, SMS) to auto-fill quotation fields.</p>
-            </div>
-          </div>
-          {parseSuccess && (
-            <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-medium self-start sm:self-auto">
-              <FiCheckCircle size={14} className="text-green-600" /> Successfully Parsed & Auto-Filled!
-            </span>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          <textarea
-            rows={3}
-            value={rawMessage}
-            onChange={(e) => setRawMessage(e.target.value)}
-            placeholder={`e.g., "Hi, balak namin mag El Nido 4D3N next month, 4 adults kami na may kasamang airport transfer tapos gusto namin sumali sa Island Tour A at C, meron ba kayong kasamang insurance?"`}
-            className="w-full px-4 py-3 bg-gray-50/50 border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#c89134] focus:bg-white transition"
-          />
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleParseWithAICopilot}
-              disabled={isParsing}
-              className="bg-[#c89134] hover:bg-[#b07c29] text-white px-5 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 transition shadow-sm disabled:opacity-50 cursor-pointer"
-            >
-              {isParsing ? (
-                <>
-                  <FiLoader className="animate-spin" size={16} /> Parsing with Gemini AI...
-                </>
-              ) : (
-                <>
-                  <FiCpu size={16} /> Parse with AI Copilot
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Quotation Form */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-amber-200 space-y-6">
-        <h2 className="text-lg font-bold text-gray-900 border-b border-gray-100 pb-3">Invoice & Package Details</h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Client Name</label>
-            <input
-              type="text"
-              value={client}
-              onChange={(e) => setClient(e.target.value)}
-              placeholder="e.g., Juan Dela Cruz"
-              className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c89134]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Add Offerings / Fees</label>
-            <select
-              onChange={handleAddItem}
-              defaultValue=""
-              className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c89134] bg-white cursor-pointer"
-            >
-              <option value="" disabled>+ Choose item to add...</option>
-              <optgroup label="Tour Packages">
-                {AVAILABLE_ITEMS.filter(i => i.category === 'Tour Packages').map(item => (
-                  <option key={item.name} value={item.name}>{item.name} - ₱{item.price.toLocaleString()}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Transport & Fees">
-                {AVAILABLE_ITEMS.filter(i => i.category === 'Transport & Fees').map(item => (
-                  <option key={item.name} value={item.name}>{item.name} - ₱{item.price.toLocaleString()}</option>
-                ))}
-              </optgroup>
-              <optgroup label="Add-ons">
-                {AVAILABLE_ITEMS.filter(i => i.category === 'Add-ons').map(item => (
-                  <option key={item.name} value={item.name}>{item.name} - ₱{item.price.toLocaleString()}</option>
-                ))}
-              </optgroup>
-            </select>
-
-            {selectedItems.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-2.5">
-                {selectedItems.map((item, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center gap-1.5 bg-[#fcfbf9] border border-amber-200/80 text-gray-800 text-xs px-2.5 py-1 rounded-lg shadow-2xs font-medium"
-                  >
-                    <span>{item.name}</span>
-                    <span className="text-[#c89134] font-semibold">₱{item.price.toLocaleString()}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(index)}
-                      className="text-gray-400 hover:text-red-500 transition ml-0.5"
-                      title="Remove"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
+    <div className="max-w-5xl mx-auto px-6 py-10 font-sans text-gray-900 bg-white relative">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center pb-6 mb-8 border-b border-gray-200 gap-4">
         <div>
-          <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Inclusions / Custom Notes</label>
-          <textarea
-            rows={2}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            className="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#c89134]"
-          />
+          <span className="text-xs font-semibold tracking-wider text-blue-600 uppercase">Jazgot Tours Administration</span>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 mt-1">Quotation Management Module</h1>
         </div>
+        
+        <div className="inline-flex bg-gray-100 p-1 rounded-lg border border-gray-200">
+          <button
+            type="button"
+            onClick={() => setActiveTab('ai')}
+            className={`px-4 py-2 text-xs font-semibold rounded-md transition-all ${
+              activeTab === 'ai' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Chat Message Parser
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('manual')}
+            className={`px-4 py-2 text-xs font-semibold rounded-md transition-all ${
+              activeTab === 'manual' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Quotation Form
+          </button>
+        </div>
+      </div>
 
-        {/* Clean PDF Preview Box */}
-        <div className="bg-[#fcfbf9] border border-amber-200/80 rounded-xl p-5 space-y-4">
-          <div className="flex justify-between items-center border-b border-amber-200/50 pb-3">
-            <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#c89134]">JazGot Travel & Tours</span>
-              <h3 className="text-base font-bold text-gray-900">Official Quotation / Invoice Preview</h3>
+      {activeTab === 'ai' && (
+        <div className="mb-8 p-6 bg-gray-50 border border-gray-200 rounded-xl">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-gray-700 mb-2">Automated Inquiry Extraction</h2>
+          <p className="text-xs text-gray-500 mb-4">Paste unstructured client chat logs below to automatically populate customer parameters and map package preferences.</p>
+          <textarea
+            rows={4}
+            className="w-full p-3.5 bg-white border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all shadow-sm"
+            placeholder="Paste client inquiry text here..."
+            value={rawText}
+            onChange={(e) => setRawText(e.target.value)}
+          />
+          <button
+            type="button"
+            onClick={handleAIParse}
+            disabled={loading}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-lg text-xs uppercase tracking-wider transition-all disabled:opacity-50 shadow-sm"
+          >
+            {loading ? 'Processing Text...' : 'Extract and Populate Form'}
+          </button>
+        </div>
+      )}
+
+      <form onSubmit={handleSaveQuotation} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-700 border-b border-gray-100 pb-3">Client Profile Information</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase text-gray-600 mb-1">Full Client Name</label>
+                <input
+                  type="text"
+                  required
+                  className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-gray-600 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                    value={clientEmail}
+                    onChange={(e) => setClientEmail(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-gray-600 mb-1">Contact Number</label>
+                  <input
+                    type="text"
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                    value={clientContact}
+                    onChange={(e) => setClientContact(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-gray-600 mb-1">Duration</label>
+                  <input
+                    type="text"
+                    required
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                    value={duration}
+                    onChange={(e) => setDuration(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase text-gray-600 mb-1">Headcount (Pax)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all"
+                    value={pax}
+                    onChange={(e) => setPax(Number(e.target.value))}
+                  />
+                </div>
+              </div>
             </div>
-            <span className="text-xs text-gray-500">Ref: INV-{Math.floor(Math.random() * 90000 + 10000)}</span>
           </div>
 
-          <div className="text-sm space-y-3 text-gray-700">
-            <p><strong className="text-gray-900">Billed To:</strong> {client || '[Client Name Placeholder]'}</p>
-            
-            <div>
-              <strong className="text-gray-900 block mb-2">Selected Items & Fees:</strong>
-              {selectedItems.length === 0 ? (
-                <p className="text-xs text-gray-400 italic">No items selected yet. Use the dropdown above to add tours, transport, or fees.</p>
-              ) : (
-                <div className="space-y-1.5 border border-amber-100 rounded-lg bg-white p-3">
-                  {selectedItems.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center py-1 border-b border-gray-50 last:border-0 text-xs sm:text-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-gray-800">{item.name}</span>
-                        <span className="text-[10px] bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200/60">{item.category}</span>
-                      </div>
-                      <span className="font-bold text-gray-900">₱{item.price.toLocaleString()}</span>
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-700 border-b border-gray-100 pb-3">Select Tour Package</h2>
+            <div className="space-y-3">
+              {TOUR_PACKAGES.map((pkg) => {
+                const isSelected = selectedPackageId === pkg.id;
+                return (
+                  <label
+                    key={pkg.id}
+                    className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all ${
+                      isSelected ? 'border-blue-600 bg-blue-50/20 ring-1 ring-blue-600/30' : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        name="tour_package"
+                        checked={isSelected}
+                        onChange={() => setSelectedPackageId(pkg.id)}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                      />
+                      <span className="text-sm font-semibold text-gray-900">{pkg.name}</span>
                     </div>
-                  ))}
-                  <div className="flex justify-between items-center pt-2.5 mt-2 border-t border-gray-200 font-bold text-sm text-gray-900">
-                    <span>Total Amount:</span>
-                    <span className="text-[#c89134] text-base">₱{totalAmount.toLocaleString()}</span>
-                  </div>
+                    <span className="text-sm font-bold text-gray-900">₱{pkg.price.toLocaleString()} <span className="text-xs font-normal text-gray-500">/ pax</span></span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-4">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-700 border-b border-gray-100 pb-3">Optional Add-ons</h2>
+            <div className="space-y-3">
+              {ADD_ONS_LIST.map((addon) => {
+                const isChecked = selectedAddOns.includes(addon.id);
+                return (
+                  <label
+                    key={addon.id}
+                    className={`flex items-center justify-between p-3.5 border rounded-lg cursor-pointer transition-all ${
+                      isChecked ? 'border-blue-600 bg-blue-50/20' : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => handleAddOnToggle(addon.id)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm font-medium text-gray-900">{addon.name}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">+₱{addon.price.toLocaleString()}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-1">
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 sticky top-6 space-y-6 shadow-sm">
+            <div>
+              <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Financial Breakdown</span>
+              <h3 className="text-base font-bold text-gray-900 mt-0.5">Quotation Summary</h3>
+            </div>
+
+            <div className="space-y-3 pt-3 border-t border-gray-200 text-xs text-gray-600">
+              <div className="flex justify-between">
+                <span>Headcount:</span>
+                <span className="font-semibold text-gray-900">{pax} Pax</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Duration:</span>
+                <span className="font-semibold text-gray-900">{duration}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Package Subtotal:</span>
+                <span className="font-semibold text-gray-900">₱{packageSubtotal.toLocaleString()}</span>
+              </div>
+              {selectedAddOns.length > 0 && (
+                <div className="flex justify-between">
+                  <span>Add-ons Subtotal:</span>
+                  <span className="font-semibold text-gray-900">₱{addOnsSubtotal.toLocaleString()}</span>
                 </div>
               )}
             </div>
 
-            <p className="pt-1"><strong className="text-gray-900">Notes:</strong> {notes}</p>
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex justify-between items-baseline mb-6">
+                <span className="text-xs font-bold uppercase tracking-wider text-gray-700">Total Amount:</span>
+                <span className="text-xl font-black text-blue-600">₱{totalAmount.toLocaleString()}</span>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg text-xs uppercase tracking-wider transition-all shadow-sm"
+              >
+                Save Quotation Record
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <button
-            type="button"
-            onClick={handleGeneratePDF}
-            className="flex-1 bg-[#c89134] hover:bg-[#b07c29] text-white py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition shadow-sm cursor-pointer"
-          >
-            {downloaded ? <FiCheckCircle size={16} /> : <FiDownload size={16} />}
-            {downloaded ? 'PDF Downloaded Successfully!' : 'Download PDF Invoice'}
-          </button>
-          <button
-            type="button"
-            onClick={() => alert(`Invoice sent directly to ${client || 'the client'}`)}
-            className="flex-1 bg-[#2c221e] hover:bg-[#3a2e29] text-white py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition shadow-sm cursor-pointer"
-          >
-            <FiSend size={16} /> Send PDF via Email / Viber
-          </button>
+      </form>
+
+      {/* Formal Modal Dialog Overlay */}
+      {modalState.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs px-4">
+          <div className="bg-white border border-gray-200 rounded-2xl max-w-sm w-full p-6 shadow-xl text-center relative space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            
+            <button
+              type="button"
+              onClick={() => setModalState(prev => ({ ...prev, isOpen: false }))}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-sm font-bold"
+            >
+              ✕
+            </button>
+
+            <div className="flex justify-center pt-2">
+              <div className={`w-14 h-14 rounded-full flex items-center justify-center border ${
+                modalState.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-red-50 border-red-200 text-red-600'
+              }`}>
+                <span className="text-xl font-bold">{modalState.type === 'success' ? '✓' : '!'}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-gray-900">{modalState.title}</h3>
+              <p className="text-xs text-gray-500 leading-relaxed px-2">
+                {modalState.message}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setModalState(prev => ({ ...prev, isOpen: false }))}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-xs uppercase tracking-wider transition-all shadow-sm"
+            >
+              Done
+            </button>
+
+          </div>
         </div>
-      </div>
+      )}
+
     </div>
   );
 }
