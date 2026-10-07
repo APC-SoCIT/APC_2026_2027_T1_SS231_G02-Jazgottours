@@ -42,7 +42,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="p-2 rounded-xl bg-gradient-to-br from-[#dfa241] to-[#bf7b20] text-white group-hover:scale-105 transition-all shadow-xs">
                 <FiPackage size={16} />
               </div> 
-              <span className="font-semibold tracking-wide">Services & Products</span>
+              <span className="font-semibold tracking-wide">Services</span>
             </Link>
 
             <Link 
