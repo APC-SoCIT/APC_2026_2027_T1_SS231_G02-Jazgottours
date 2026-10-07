@@ -32,7 +32,7 @@ export default function AdminHomePage() {
           <div className="space-y-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Quotations Made</span>
             <h2 className="text-3xl font-extrabold text-gray-900">24</h2>
-            <Link href="/admin/quotation" className="inline-flex items-center gap-1 text-xs font-semibold text-[#c89134] hover:underline pt-2">
+            <Link href="/admin/quotation/records" className="inline-flex items-center gap-1 text-xs font-semibold text-[#c89134] hover:underline pt-2">
               View quotations <FiArrowRight size={12} />
             </Link>
           </div>
@@ -74,7 +74,9 @@ export default function AdminHomePage() {
       <div className="bg-white rounded-2xl border border-amber-200/80 shadow-xs overflow-hidden">
         <div className="p-5 border-b border-amber-100 flex justify-between items-center bg-[#fcfbf9]/50">
           <h3 className="font-bold text-gray-900 text-base">Recent Quotations</h3>
-          <span className="text-xs font-semibold text-[#c89134] hover:underline cursor-pointer">Manage all</span>
+          <Link href="/admin/quotation/records" className="text-xs font-semibold text-[#c89134] hover:underline">
+            Manage all
+          </Link>
         </div>
 
         <div className="overflow-x-auto">
