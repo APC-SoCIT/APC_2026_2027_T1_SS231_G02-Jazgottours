@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { UserRound } from "lucide-react"
+import { AuthHeaderAction } from "@/components/auth-header-action"
 
 const navLinks = [
   { href: "/about", label: "ABOUT" },
@@ -54,13 +54,7 @@ export function SiteHeader() {
               </Link>
             ))}
           </nav>
-          <Link
-            href="/signin"
-            className="inline-flex items-center gap-2 rounded-md border border-primary-foreground/70 px-4 py-1.5 text-xs font-semibold tracking-wide text-primary-foreground transition-colors hover:bg-primary-foreground/10"
-          >
-            <UserRound className="size-3.5" aria-hidden="true" />
-            SIGN IN
-          </Link>
+          <AuthHeaderAction />
         </div>
       </div>
     </header>

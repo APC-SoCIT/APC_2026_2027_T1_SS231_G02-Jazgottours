@@ -7,24 +7,44 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldGroup, FieldLabel, FieldDescription } from "@/components/ui/field"
+import { supabase } from "@/lib/supabase"
 
 export function SignInForm() {
   const router = useRouter()
-  
-  // State to toggle between Login and Register modes
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    
-    // Simulated authentication success
-    if (authMode === "signup") {
-      toast.success("Account created successfully!")
-    } else {
-      toast.success("Signed in successfully!")
+    setIsSubmitting(true)
+
+    const formData = new FormData(event.currentTarget)
+    const email = String(formData.get("email"))
+    const password = String(formData.get("password"))
+    const fullName = String(formData.get("name") ?? "")
+
+    const result = authMode === "signin"
+      ? await supabase.auth.signInWithPassword({ email, password })
+      : await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName } },
+        })
+
+    setIsSubmitting(false)
+
+    if (result.error) {
+      toast.error(result.error.message)
+      return
     }
-    
-    // Redirect the user back to the homepage so they can book their tour
+
+    if (authMode === "signup" && !result.data.session) {
+      toast.success("Account created. Check your email to confirm your address, then sign in.")
+      setAuthMode("signin")
+      return
+    }
+
+    toast.success(authMode === "signin" ? "Signed in successfully!" : "Account created successfully!")
     router.push("/")
   }
 
@@ -47,7 +67,6 @@ export function SignInForm() {
         className="rounded-xl border border-border bg-card p-6 text-card-foreground shadow-sm"
       >
         <FieldGroup>
-          {/* Only show the Name field if they are signing up */}
           {authMode === "signup" && (
             <Field>
               <FieldLabel htmlFor="name">Full Name</FieldLabel>
@@ -65,11 +84,10 @@ export function SignInForm() {
             <Input id="password" name="password" type="password" placeholder="••••••••" required />
           </Field>
           
-          <Button type="submit" className="w-full mt-2">
-            {authMode === "signin" ? "Sign In" : "Sign Up"}
+          <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
+            {isSubmitting ? "Please wait..." : authMode === "signin" ? "Sign In" : "Sign Up"}
           </Button>
           
-          {/* Dynamic Toggle Button instead of a dead-end Contact link */}
           <FieldDescription className="text-center mt-4">
             {authMode === "signin" ? "Don't have an account? " : "Already have an account? "}
             <button 
